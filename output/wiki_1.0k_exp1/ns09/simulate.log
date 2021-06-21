@@ -1,0 +1,14 @@
+@ 2021-06-21 12:17:57.78
+Simulating on data derived from: wiki [exp1]
+	Parameters: algo=ns09, num_rounds=1, seed_type=random.25, seed_count=50
+	Parameters of ns09: theta=0.01
+	Exports: 1, perturbed: 1
+Simulating: e0_v0
+	g_src nodes: 894, edges: 17893
+	g_tar nodes: 898, edges: 25530
+	node overlap: 792
+	#0
+	    50 seed nodes (from top 25%)
+	    9 rounds, 46.79 sec(s) 
+	    TP=81.06%, FP=4.67%, N/A=14.27%, FP/TP=5.76%
+	    Total error (w/mappings out of GT): 9.22%)

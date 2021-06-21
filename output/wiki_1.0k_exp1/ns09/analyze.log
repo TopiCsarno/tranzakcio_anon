@@ -1,0 +1,14 @@
+@ 2021-06-21 12:19:07.925
+Analyzing results of: wiki [exp1]
+Measuring accuracy
+	e0_v0: TP=81.06%, FP=4.67%, TFP=9.22%, N/A=14.27%, FP/TP=5.76%
+	Avg. accuracy: TP=81.06%, FP=4.67%, TFP=9.22%, N/A=14.27%, FP/TP=5.76%
+	  TP =	81.06060606060606
+	  FP =	4.671717171717172
+	  TFP =	9.217171717171716
+	  N/A=	14.267676767676768
+	  F/T=	5.7632398753894085
+Measuring runtime
+	e0_v0: 46.79 sec(s), avg: 46.79sec(s)
+	Total: 46.79 sec(s)
+LTA measurement skipped!

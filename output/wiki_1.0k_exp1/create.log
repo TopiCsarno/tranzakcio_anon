@@ -1,0 +1,10 @@
+@ 2021-06-21 12:17:49.967
+Creating test data for: wiki [exp1]
+	(Nodes: 7115, edges: 100762)
+	Export params: exports=1, export_size=1000
+	Perturb. params: algo=ns09, variants=1, alpha_v=0.8, alpha_e=0.8
+	Export: ./output/wiki_1.0k_exp1/SimuData/e0.tgf, nodes: 1002, edges: 25745
+		Variant: v0
+			g_src nodes: 894, edges: 17893
+			g_tar nodes: 898, edges: 18748
+			node overlap: 792
