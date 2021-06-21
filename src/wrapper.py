@@ -1,34 +1,28 @@
 import os
-import sys 
 import time
 import csv
 import networkx as nx
 from subprocess import Popen, PIPE
 
-def _run_command(program, function, *args, verbose=True):
-    command = None
-    if program == 'SEC':
-        command = ['java', '-jar', 'libs/secGraphCLI.jar']
-    elif program == 'SAL':
-        command = ['java', '-cp', 'bin/:libs/*', 'SAL']
-    elif program == 'copy':
-        command = ['cp']
+def _run_command(prg, *args, verbose=False):
+    # command aliases
+    alias = {
+        'SEC': 'java -jar libs/secGraphCLI.jar',
+        'SAL': 'java -cp bin/:libs/* SAL',
+        'KL': 'java -cp bin Reconciliation'
+    }
+    # concatnate command string
+    cmd = alias.get(prg, prg) + ' ' + ' '.join([str(arg) for arg in args])
+
+    # run command using Popen
+    p = Popen(cmd, stderr=PIPE, stdout=PIPE, shell=True)
+    output, errors = p.communicate()
+    if (p.returncode != 0):
+        raise Exception("Error:\n" + errors.decode('utf-8'))
     else:
-        raise Exception("Command not supported!")
-
-    # extend list with function name and function parameters (in string format)
-    args = [str(x) for x in args]
-    command.extend([function, *args])
-
-    # run program with commands
-    p = Popen(command, stdout=PIPE)
-    output = []
-    for bytes in iter(p.stdout.readline, b''):
-        message = bytes.decode()
-        output.append(message)
-        if verbose:
-            print(message)
-    return output
+        if (verbose):
+            print(output.decode('utf-8'))
+        return output.decode('utf-8')
 
 # generate file paths
 def _get_paths(network_name, size, experiment_id):
@@ -37,25 +31,25 @@ def _get_paths(network_name, size, experiment_id):
     size_string = ''
     if (size != -1):
         size_string = str(float(size)/1000)+'k_'
+    base_dir = "{}/output/{}_{}{}/".format(curr_dir, network_name, size_string, experiment_id)
     input_file = "{}/output/{}_{}{}/SimuData/e0_v0_tar_orig.tgf".format(curr_dir, network_name, size_string, experiment_id)
     output_file = "{}/output/{}_{}{}/SimuData/e0_v0_tar.tgf".format(curr_dir, network_name, size_string, experiment_id)
-    base_dir = "{}/output/{}_{}{}/".format(curr_dir, network_name, size_string, experiment_id)
     return input_file, output_file, base_dir
 
 # SALAB FUNCTIONS
-def create_data(network_name, size, experiment_id, n_exports, perturb_algo, n_perturbs, alpha_v, alpha_e):
-    _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, n_perturbs, alpha_e, alpha_v)
+def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alpha_v, alpha_e):
+    _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, 1, alpha_e, alpha_v)
     # create backup file
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-    _run_command('copy', output_file, input_file)
+    _run_command('cp', output_file, input_file)
 
-def simulate(network_name, size, experiment_id, deanon_algo, n_rounds, seed_type, seed_size, deanon_params):
+def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_size, deanon_params):
     if deanon_algo == 'KL':
-        print(deanon_KL(network_name, size, experiment_id, deanon_params))
+        deanon_KL(network_name, size, experiment_id, deanon_params)
     else:
-        _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, n_rounds, seed_type, seed_size, deanon_params)
+        _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, 1, seed_type, seed_size, deanon_params)
 
-def analyze(network_name, size, experiment_id, deanon_algo, verbose=True):
+def analyze(network_name, size, experiment_id, deanon_algo):
     _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta')
 
 def export(src_net, tar_net, exp_size):
@@ -89,8 +83,7 @@ def deanon_KL(network_name, size, experiment_id, deanon_params):
             f2.close()
     else:
         raise Exception('Seeds directory missing!')
-
-    return os.system('java -cp bin Reconciliation ' + input_file + ' ' + output_file + ' ' + seed_dir + 'e0_v0_seedmap.txt ' + str(deanon_params) + ' ' + exp_dir + 'e0_v0_res.tgf')
+    _run_command('KL', input_file, output_file, seed_dir+'e0_v0_seedmap.txt', str(deanon_params), exp_dir+'e0_v0_res.tgf')
 
 def accurarcy_KL(network_name, size, experiment_id):
     _, _, base_dir = _get_paths(network_name, size, experiment_id)
@@ -139,7 +132,7 @@ def read_accuracy(network_name, size, experiment_id, deanon_algo):
     if (deanon_algo == 'KL'):
         accurarcy_KL(network_name, size, experiment_id)
     else:
-        _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta', verbose=False)
+        _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta')
         time.sleep(1)
     # wait for script to finish
     lines = {}
@@ -196,12 +189,12 @@ def utility(network_name, size, experiment_id, metric, param=None):
 
 def util_deg(network_name, size, experiment_id, param):
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-    message = _run_command('SEC', '-m', 'u', '-a', 'deg', '-gA', output_file, '-gB', input_file, verbose=False)[0]
+    message = _run_command('SEC', '-m', 'u', '-a', 'deg', '-gA', output_file, '-gB', input_file)
     return float(message.replace('\n', ''))
 
 def util_LCC(network_name, size, experiment_id, param):
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-    message = _run_command('SEC', '-m', 'u', '-a', 'LCC', '-gA', output_file, '-gB', input_file, verbose=False)[0]
+    message = _run_command('SEC', '-m', 'u', '-a', 'LCC', '-gA', output_file, '-gB', input_file)
     return float(message.replace('\n', ''))
 
 def util_infect(network_name, size, experiment_id, param):
@@ -210,5 +203,5 @@ def util_infect(network_name, size, experiment_id, param):
     else:
         raise Exception('Util infect parameter needed')
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-    message =_run_command('SEC', '-m', 'u', '-a', 'Infec', '-gA', output_file, '-gB', input_file, '-nInf', nInf, verbose=False)[0]
+    message =_run_command('SEC', '-m', 'u', '-a', 'Infec', '-gA', output_file, '-gB', input_file, '-nInf', nInf)
     return float(message.replace('\n', ''))

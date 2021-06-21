@@ -13,16 +13,16 @@ from src.wrapper import create_data, simulate, read_accuracy, anonimize, utility
 
 # %%
 # háttérismeret és anonimizálandó adat generálása
-create_data('enron', 2000, 'exp1', 1, 'ns09', 1, 0.8, 0.8)
-create_data('enron', 2000, 'exp2', 1, 'ns09', 1, 0.5, 0.75)
-create_data('enron', 2000, 'exp3', 1, 'ns09', 1, 0.4, 0.6)
+create_data('enron', 2000, 'exp1', 1, 'ns09', 0.8, 0.8)
+create_data('enron', 2000, 'exp2', 1, 'ns09', 0.5, 0.75)
+create_data('enron', 2000, 'exp3', 1, 'ns09', 0.4, 0.6)
 
 # %%
 # Deanonimizáció
 # megfigyelhetjük, hogy itt jelentősen sikeresebb a deanon, mikor jobb a háttérismeret
-simulate('enron', 2000, 'exp1', 'ns09', 1, 'random.25', 50, 0.01)
-simulate('enron', 2000, 'exp2', 'ns09', 1, 'random.25', 50, 0.01)
-simulate('enron', 2000, 'exp3', 'ns09', 1, 'random.25', 50, 0.01)
+simulate('enron', 2000, 'exp1', 'ns09', 'random.25', 50, 0.01)
+simulate('enron', 2000, 'exp2', 'ns09', 'random.25', 50, 0.01)
+simulate('enron', 2000, 'exp3', 'ns09', 'random.25', 50, 0.01)
 
 # %%
 # Pontosságok beolvasása
@@ -59,21 +59,23 @@ network = 'enron'
 size = 3000
 
 # %%
-create_data(network, size, experiment, 1, 'sample', 1, 1, 0.95)
+create_data(network, size, experiment, 1, 'sample', 1, 0.95)
 
 # %%
 # ez az ns09 algo
-simulate(network, size, experiment, 'ns09', 1, 'random.25', 50, 0.01)
+simulate(network, size, experiment, 'ns09', 'random.25', 50, 0.01)
 # ez a blb, mit tud?
 # %%
-simulate(network, size, experiment, 'blb', 1, 'random.25', 50, '0.1,0.5')
+simulate(network, size, experiment, 'blb', 'random.25', 50, '0.1,0.5')
 # %%
-# ez a grh (TODO) -> KL implement
-simulate(network, size, experiment, 'grh', 1, 'random.25', 50, 0.1)
+simulate(network, size, experiment, 'KL', 'random.25', 50, 50)
+
+# %%
+read_accuracy(network, size, experiment, 'KL')
 # %%
 # add new data
 df = pd.DataFrame(columns=['experiment', 'anon', 'deanon', 'TPR', 'FPR'])
-for deanon in ['ns09', 'blb', 'grh']:
+for deanon in ['ns09', 'blb', 'KL']:
 	TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
 	df = df.append({'experiment':experiment, 'anon':'none', 'deanon':deanon, 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
 df
@@ -98,9 +100,8 @@ deanon = 'ns09'
 network = 'wiki'
 size = 2000
 # %%
-create_data(network, size, experiment, 1, 'ns09', 1, 0.5, 0.75)
+create_data(network, size, experiment, 1, 'ns09', 0.5, 0.75)
 # %%
-
 # define parameters
 params = {
     'sw': 0.1,
@@ -119,7 +120,7 @@ for anon in ['sw', 'kda', 'dp']:
     util = utility(network, size, experiment, 'lcc')
 
     # run deanon algo
-    simulate(network, size, experiment, deanon, 1, 'random.25', 50, 0.01)
+    simulate(network, size, experiment, deanon, 'random.25', 50, 0.01)
 
     # calculate results
     TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
@@ -148,7 +149,7 @@ fig.show()
 # paraméterek
 experiment = '4_exp'
 network = 'wiki'
-size = 2000
+size = 1000
 nseed = 50
 
 # %%
@@ -160,14 +161,14 @@ params = {
     'dp': 50,
     # deanon
     'ns09': 0.01,
-    'grh': 0.1,
+    'KL': 50,
     'blb': '0.1,0.5',
     # util
     'inf': 5
 }
 
 # adott háttérismeret
-create_data(network, size, experiment, 1, 'ns09', 1, 0.5, 0.75)
+create_data(network, size, experiment, 'ns09', 1, 0.5, 0.75)
 
 # results will be sroted in this df
 df = df_util = pd.DataFrame()
@@ -182,9 +183,9 @@ for anon in ['sw', 'kda', 'dp']:
         value = utility(network, size, experiment, util, param)
         df_util = df_util.append({'anon':anon, 'value':value, 'util': util}, ignore_index=True)
 
-    for deanon in ['ns09', 'grh', 'blb']:
+    for deanon in ['ns09', 'KL', 'blb']:
         # run deanon algos
-        simulate(network, size, experiment, deanon, 1, 'random.25', nseed, params[deanon])
+        simulate(network, size, experiment, deanon, 'random.25', nseed, params[deanon])
         # calculate results
         TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
         df = df.append({'experiment':experiment, 'anon':anon, 'deanon':deanon, 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
@@ -213,9 +214,5 @@ fig = px.bar(df_util, x="anon", y="value",
     },
     title="Utility loss for each technique")
 fig.show()
-
-# %%
-
-# %%
 
 # %%
