@@ -37,17 +37,17 @@ def _get_paths(network_name, size, experiment_id):
     return input_file, output_file, base_dir
 
 # SALAB FUNCTIONS
-def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alpha_v, alpha_e):
-    _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, 1, alpha_e, alpha_v)
+def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alpha_v, alpha_e, verbose=False):
+    _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, 1, alpha_e, alpha_v, verbose=verbose)
     # create backup file
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
     _run_command('cp', output_file, input_file)
 
-def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_size, deanon_params):
+def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_size, deanon_params, verbose=False):
     if deanon_algo == 'KL':
         deanon_KL(network_name, size, experiment_id, deanon_params)
     else:
-        _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, 1, seed_type, seed_size, deanon_params)
+        _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, 1, seed_type, seed_size, deanon_params, verbose=verbose)
 
 def analyze(network_name, size, experiment_id, deanon_algo):
     _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta')
