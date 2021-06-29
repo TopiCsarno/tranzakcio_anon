@@ -44,6 +44,10 @@ def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alph
     _run_command('cp', output_file, input_file)
 
 def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_size, deanon_params, verbose=False):
+    _, _, basedir = _get_paths(network_name, size, experiment_id)
+    path = basedir+'SimuData/e0_v0_overlap.cache'
+    if os.path.exists(path):
+        os.remove(path)
     if deanon_algo == 'KL':
         deanon_KL(network_name, size, experiment_id, deanon_params)
     else:

@@ -13,47 +13,39 @@ from src.wrapper import create_data, simulate, read_accuracy, anonimize, utility
 # háttérismeret és anonimizálandó adat generálása
 # Erős támadó
 print("Háttérismeret generálása...\n")
-create_data('enron', 2000, 'exp1', 1, 'ns09', 0.8, 0.8, verbose=True)
+create_data('enron', 2000, 'első_próba', 1, 'ns09', 0.5, 0.75, verbose=True)
 
 # %%
 # Deanonimizáció
 # megfigyelhetjük, hogy itt jelentősen sikeresebb a deanon, mikor jobb a háttérismeret
 print("Deanonimizációs algoritmus futtatása\n")
-simulate('enron', 2000, 'exp1', 'ns09', 'random.25', 50, 0.01, verbose=True)
+simulate('enron', 2000, 'első_próba', 'ns09', 'random.25', 50, 0.01, verbose=True)
 
 # %%
 # Tamadás eredényessége
-TPR, _, FPR, _ = read_accuracy('enron', 2000, 'exp1', 'ns09')['avg']
+TPR, _, FPR, _ = read_accuracy('enron', 2000, 'első_próba', 'ns09')['avg']
 print('True positive rate: {:.2f}\nFalse positive rate: {:.2f}'.format(TPR, FPR))
 
 # %%
-print('Közepes támadó modell futtatása')
-create_data('enron', 2000, 'exp2', 1, 'ns09', 0.5, 0.75)
-simulate('enron', 2000, 'exp2', 'ns09', 'random.25', 50, 0.01)
-
 print('Gyenge támadó modell futtatása')
-create_data('enron', 2000, 'exp3', 1, 'ns09', 0.4, 0.6)
-simulate('enron', 2000, 'exp3', 'ns09', 'random.25', 50, 0.01)
+create_data('enron', -1, 'gyenge', 1, 'ns09', 0.25, 0.5)
+simulate('enron', -1, 'gyenge', 'ns09', 'random.25', 1000, 0.01)
+
+print('Közepes támadó modell futtatása')
+create_data('enron', -1, 'kozep', 1, 'ns09', 0.5, 0.75)
+simulate('enron', -1, 'kozep', 'ns09', 'random.25', 1000, 0.01)
+
+print('Erős támadó modell futtatása')
+create_data('enron', -1, 'eros', 1, 'ns09', 0.7, 0.9)
+simulate('enron', -1, 'eros', 'ns09', 'random.25', 1000, 0.01)
 
 print('Eredmények beolvasása')
 df = pd.DataFrame(columns=['experiment', 'deanon', 'TPR', 'FPR'])
-for i in range(3):
-	experiment = 'exp'+str(i+1)
-	TPR, _, FPR, _ = read_accuracy('enron', 2000, experiment, 'ns09')['avg']
-	df = df.append({'experiment':experiment, 'deanon':'ns09', 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
-df
 
-# %%
-# Eredmények ábrázolása a score boardon
-fig = px.scatter(df, x='FPR', y='TPR', 
-    color='experiment', 
-    range_y=[0,100],
-    labels={
-        "FPR": "Incorrect matches (FPR)",
-        "TPR": "Correct matches (TPR)",
-    },
-    title="Scoreboard: Correct vs Incorrect matches")
-fig.show()
+for experiment in ['eros', 'kozep', 'gyenge']:
+	TPR, _, FPR, _ = read_accuracy('enron', -1, experiment, 'ns09')['avg']
+	df = df.append({'experiment':experiment, 'deanon':'ns09 (theta=0.01)', 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
+df
 
 # %% [markdown]
 #  ## 2. rész
@@ -64,61 +56,53 @@ fig.show()
 
 # %%
 # paraméterek
-experiment = '2_exp'
+experiment = 'eros'
 network = 'enron'
-size = 2000
+size = -1
 
-# %%
-# új háttérismeret generálása
-create_data(network, size, experiment, 1, 'ns09', 0.8, 0.8)
-
+params = {
+    'ns09': 0.01,
+    'blb': '0.01,0.5',
+    'KL': 100
+}
 # %%
 # Három deanon algoritmus (ki lehet fejteni szövegesen)
-print('ns09 deanonimizáció futtatása')
-simulate(network, size, experiment, 'ns09', 'random.25', 50, 0.01)
+# ns09-et már korábban lefuttattuk
+# print('ns09 deanonimizáció futtatása')
+# simulate(network, size, experiment, 'ns09', 'random.25', 1000, 0.01, verbose=True)
 # ez a blb, mit tud?
 # %%
 print('blb deanonimizáció futtatása')
-simulate(network, size, experiment, 'blb', 'random.25', 50, '0.1,0.5')
+simulate(network, size, experiment, 'blb', 'random.25', 1000, params['blb'], verbose=True)
 # %%
 print('KL deanonimizáció futtatása')
-simulate(network, size, experiment, 'KL', 'random.25', 50, 100)
+simulate(network, size, experiment, 'KL', 'random.25', 1000, params['KL'], verbose=True)
 
 # %%
 print('pontosságok beolvasása')
-df = pd.DataFrame(columns=['experiment', 'anon', 'deanon', 'TPR', 'FPR'])
+df = pd.DataFrame(columns=['experiment', 'deanon', 'TPR', 'FPR'])
 for deanon in ['ns09', 'blb', 'KL']:
 	TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
-	df = df.append({'experiment':experiment, 'anon':'none', 'deanon':deanon, 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
+	df = df.append({'experiment':experiment, 'deanon':deanon+' ('+str(params[deanon])+')', 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
 df
-# %%
-fig = px.scatter(df, x='FPR', y='TPR', 
-    symbol='deanon', 
-    range_y=[0,100],
-    labels={
-        "FPR": "Incorrect matches (FPR)",
-        "TPR": "Correct matches (TPR)",
-    },
-    title="Scoreboard: Correct vs Incorrect matches")
-fig.show()
 # %% [markdown]
 # 3. rész
 # 1 perturn, 3 anon, 1 deanon, utility measure
 
 # %%
 # paraméterek
-experiment = '3_exp'
+experiment = 'eros'
 deanon = 'ns09'
 network = 'enron'
-size = 2000 
+size = -1
 
 print("Háttérismeret generálása")
-create_data(network, size, experiment, 1, 'ns09', 0.5, 0.75)
+create_data(network, size, experiment, 1, 'ns09', 0.7, 0.9, verbose=True)
 
 # define parameters
 params = {
-    'sw': 0.2,
-    'kda': 5,
+    'sw': 0.1,
+    'kda': 50,
     'dp': 50
 }
 
@@ -135,24 +119,14 @@ for anon in ['none', 'sw', 'kda', 'dp']:
     util = utility(network, size, experiment, 'lcc')
 
     # run deanon algo
-    simulate(network, size, experiment, deanon, 'random.25', 50, 0.01)
+    simulate(network, size, experiment, deanon, 'random.25', 1000, 0.01)
 
     # calculate results
     TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
-    df = df.append({'experiment':experiment, 'anon':anon, 'deanon':deanon, 'TPR':TPR, 'FPR':FPR, 'utility':util}, ignore_index=True)
+    df = df.append({'experiment':experiment, 'anon':anon+' ('+str(params[anon])+')', 'deanon':deanon+' (0.01)', 'TPR':TPR, 'FPR':FPR, 'utility':util}, ignore_index=True)
 print("Eredmények értékelése")
 df
 
-# %%
-fig = px.scatter(df, x='FPR', y='TPR', 
-    color='anon',
-    range_y=[0,100],
-    labels={
-        "FPR": "Incorrect matches (FPR)",
-        "TPR": "Correct matches (TPR)",
-    },
-    title="Scoreboard: Correct vs Incorrect matches")
-fig.show()
 # %% [markdown]
 # 4. rész
 # - 1 perturb
@@ -163,8 +137,8 @@ fig.show()
 # %%
 # paraméterek
 network = 'enron'
-size = 1000
-nseed = 50
+size = -1
+nseed = 1000 
 
 # %%
 # define parameters
@@ -175,18 +149,17 @@ params = {
     'dp': 50,
     # deanon
     'ns09': 0.01,
-    'KL': 100,
-    'blb': '0.1,0.5',
+    'blb': '0.01,0.5',
     # util
     'inf': 5
 }
 
 # Háttérismeret generálása
 print('Gyenge támadó feltételezve')
-create_data(network, size, "gyenge", 1, 'ns09', 0.4, 0.6)
+create_data(network, size, "gyenge", 1, 'ns09', 0.25, 0.5)
 
 print('Erős támadó feltételezve')
-create_data(network, size, "eros", 1, 'ns09', 0.8, 0.8)
+create_data(network, size, "eros", 1, 'ns09', 0.7, 0.9)
 
 # eredmények gyűjtéséhez létrehozott táblázat
 df = df_util = pd.DataFrame(columns=['experiment', 'anon', 'deanon', 'TPR', 'FPR'])
@@ -206,13 +179,13 @@ for experiment in ['gyenge', 'eros']:
             #     value = utility(network, size, experiment, util, param)
             #     df_util = df_util.append({'anon':anon, 'value':value, 'util': util}, ignore_index=True)
 
-        for deanon in ['ns09', 'KL', 'blb']:
+        for deanon in ['ns09', 'blb']:
             print('\t'+deanon)
             # run deanon algos
             simulate(network, size, experiment, deanon, 'random.25', nseed, params[deanon])
             # calculate results
             TPR, _, FPR, _ = read_accuracy(network, size, experiment, deanon)['avg']
-            df = df.append({'experiment':experiment, 'anon':anon, 'deanon':deanon, 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
+            df = df.append({'experiment':experiment, 'anon':anon+' ('+str(params[anon])+')', 'deanon':deanon+' ('+str(params[deanon])+')', 'TPR':TPR, 'FPR':FPR}, ignore_index=True)
 df
 
 # %%
