@@ -183,8 +183,8 @@ def utility(network_name, size, experiment_id, metric, param=None):
         f = util_deg
     elif (metric == 'lcc'):
         f = util_LCC
-    elif (metric == 'inf'):
-        f = util_infect
+    elif (metric == 'bc'):
+        f = util_BC
 
     if (f is not None):
         return f(network_name, size, experiment_id, param)
@@ -201,11 +201,16 @@ def util_LCC(network_name, size, experiment_id, param):
     message = _run_command('SEC', '-m', 'u', '-a', 'LCC', '-gA', output_file, '-gB', input_file)
     return float(message.replace('\n', ''))
 
-def util_infect(network_name, size, experiment_id, param):
-    if param is not None:
-        nInf = param
-    else:
-        raise Exception('Util infect parameter needed')
+def util_BC(network_name, size, experiment_id, param):
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-    message =_run_command('SEC', '-m', 'u', '-a', 'Infec', '-gA', output_file, '-gB', input_file, '-nInf', nInf)
+    message = _run_command('SEC', '-m', 'u', '-a', 'BC', '-gA', output_file, '-gB', input_file)
     return float(message.replace('\n', ''))
+
+# def util_infect(network_name, size, experiment_id, param):
+#     if param is not None:
+#         nInf = param
+#     else:
+#         raise Exception('Util infect parameter needed')
+#     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
+#     message =_run_command('SEC', '-m', 'u', '-a', 'Infec', '-gA', output_file, '-gB', input_file, '-nInf', nInf)
+#     return float(message.replace('\n', ''))

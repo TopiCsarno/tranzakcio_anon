@@ -1,0 +1,10 @@
+--------
+/home/topi/Code/MNB/SecGraph/SecGraph/Snap-2.4/examples/secGraphTools/Distance.Err
+Thu May 27 11:28:22 2021
+Execution stopped: Graph->IsNode(StartNId), file ../../snap-core/bfsdfs.h, line 91
+--------
+--------
+/home/topi/Code/MNB/SecGraph/SecGraph/Snap-2.4/examples/secGraphTools/Distance.Err
+Thu May 27 11:28:40 2021
+Execution stopped: Graph->IsNode(StartNId), file ../../snap-core/bfsdfs.h, line 91
+--------
