@@ -38,7 +38,7 @@ def _get_paths(network_name, size, experiment_id):
 
 # SALAB FUNCTIONS
 def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alpha_v, alpha_e, verbose=False):
-    if perturb_algo == 'napert':
+    if perturb_algo == 'narpert':
         perturb_algo = 'ns09'
     _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, 1, alpha_e, alpha_v, verbose=verbose)
     # create backup file
