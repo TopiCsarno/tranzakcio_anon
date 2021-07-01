@@ -50,8 +50,6 @@ def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_siz
         os.remove(path)
     if deanon_algo == 'KL':
         deanon_KL(network_name, size, experiment_id, deanon_params)
-    elif deanon_algo == 'nar':
-        _run_command('SAL', 'simulate', network_name, size, experiment_id, 'ns09', 1, seed_type, seed_size, deanon_params, verbose=verbose)
     else:
         _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, 1, seed_type, seed_size, deanon_params, verbose=verbose)
 
