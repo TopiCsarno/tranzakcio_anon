@@ -38,6 +38,8 @@ def _get_paths(network_name, size, experiment_id):
 
 # SALAB FUNCTIONS
 def create_data(network_name, size, experiment_id, n_exports, perturb_algo, alpha_v, alpha_e, verbose=False):
+    if perturb_algo == 'napert':
+        perturb_algo = 'ns09'
     _run_command('SAL', 'create_data', network_name, size, experiment_id, n_exports, perturb_algo, 1, alpha_e, alpha_v, verbose=verbose)
     # create backup file
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
@@ -50,20 +52,16 @@ def simulate(network_name, size, experiment_id, deanon_algo, seed_type, seed_siz
         os.remove(path)
     if deanon_algo == 'KL':
         deanon_KL(network_name, size, experiment_id, deanon_params)
+    elif deanon_algo == 'nar':
+        _run_command('SAL', 'simulate', network_name, size, experiment_id, 'ns09', 1, seed_type, seed_size, deanon_params, verbose=verbose)
     else:
         _run_command('SAL', 'simulate', network_name, size, experiment_id, deanon_algo, 1, seed_type, seed_size, deanon_params, verbose=verbose)
 
 def analyze(network_name, size, experiment_id, deanon_algo):
-    _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta')
-
-def export(src_net, tar_net, exp_size):
-    _run_command('SAL', 'export', src_net, tar_net, exp_size)
-
-def measure(src_net, measure):
-    _run_command('SAL', 'measure', src_net, measure)
-
-def summarize(net):
-    _run_command('SAL', 'summarize', net)
+    if deanon_algo == 'nar':
+        _run_command('SAL', 'analyze', network_name, size, experiment_id, 'ns09', 'no_lta')
+    else:
+        _run_command('SAL', 'analyze', network_name, size, experiment_id, deanon_algo, 'no_lta')
 
 # SecGraph KL algo implementation
 def deanon_KL(network_name, size, experiment_id, deanon_params):
@@ -125,6 +123,8 @@ def accurarcy_KL(network_name, size, experiment_id):
 # read output values after running analyze
 def read_accuracy(network_name, size, experiment_id, deanon_algo):
 
+    if deanon_algo == 'nar':
+        deanon_algo = 'ns09'
     # delete previous result
     size_string = ''
     if (size != -1):
@@ -205,12 +205,3 @@ def util_BC(network_name, size, experiment_id, param):
     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
     message = _run_command('SEC', '-m', 'u', '-a', 'BC', '-gA', output_file, '-gB', input_file)
     return float(message.replace('\n', ''))
-
-# def util_infect(network_name, size, experiment_id, param):
-#     if param is not None:
-#         nInf = param
-#     else:
-#         raise Exception('Util infect parameter needed')
-#     input_file, output_file, _ = _get_paths(network_name, size, experiment_id)
-#     message =_run_command('SEC', '-m', 'u', '-a', 'Infec', '-gA', output_file, '-gB', input_file, '-nInf', nInf)
-#     return float(message.replace('\n', ''))
